@@ -86,7 +86,7 @@ int tinywav_open_write(TinyWav *tw,
  *
  * @return The total number of samples written to file.
  */
-size_t tinywav_write_f(TinyWav *tw, int16_t *f, int len);
+size_t tinywav_write_f(TinyWav *tw, const void *f, int len);
 
 /** Stop writing to the file. The Tinywav struct is now invalid. */
 void tinywav_close_write(TinyWav *tw);

@@ -33,11 +33,15 @@ int tinywav_open_write(TinyWav *tw,
     const char *path) {
 #if _WIN32
   errno_t err = fopen_s(&tw->f, path, "w");
-  assert(err == 0);
+  if (err != 0) {
+    return err;
+  }
 #else
   tw->f = fopen(path, "w");
 #endif
-  assert(tw->f != NULL);
+  if (!tw->f) {
+    return -1;
+  }
   tw->numChannels = numChannels;
   tw->totalFramesWritten = 0;
   tw->sampFmt = sampFmt;
@@ -60,12 +64,10 @@ int tinywav_open_write(TinyWav *tw,
   h.Subchunk2Size = 0; // fill this in on file-close
 
   // write WAV header
-  fwrite(&h, sizeof(TinyWavHeader), 1, tw->f);
-
-  return 0;
+  return fwrite(&h, sizeof(TinyWavHeader), 1, tw->f) != 1;
 }
 
-size_t tinywav_write_f(TinyWav *tw, int16_t *f, int len) {
+size_t tinywav_write_f(TinyWav *tw, const void *f, int len) {
   tw->totalFramesWritten += len;
   return fwrite(f, sizeof(int16_t), tw->numChannels*len, tw->f);
 }
