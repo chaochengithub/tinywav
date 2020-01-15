@@ -54,12 +54,12 @@ int tinywav_open_write(TinyWav *tw,
   h.Format = htonl(0x57415645); // "WAVE"
   h.Subchunk1ID = htonl(0x666d7420); // "fmt "
   h.Subchunk1Size = 16; // PCM
-  h.AudioFormat = (tw->sampFmt-1); // 1 PCM, 3 IEEE float
+  h.AudioFormat = (uint16_t)(tw->sampFmt-1); // 1 PCM, 3 IEEE float
   h.NumChannels = numChannels;
   h.SampleRate = samplerate;
   h.ByteRate = samplerate * numChannels * tw->sampFmt;
-  h.BlockAlign = numChannels * tw->sampFmt;
-  h.BitsPerSample = 8*tw->sampFmt;
+  h.BlockAlign = (uint16_t)(numChannels * tw->sampFmt);
+  h.BitsPerSample = (uint16_t)(8*tw->sampFmt);
   h.Subchunk2ID = htonl(0x64617461); // "data"
   h.Subchunk2Size = 0; // fill this in on file-close
 
