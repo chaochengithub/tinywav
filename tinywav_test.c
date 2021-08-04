@@ -1,7 +1,8 @@
 #include "tinywav.h"
 
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char** argv)
 {
@@ -25,7 +26,7 @@ int main(int argc, char** argv)
   TinyWav tw;
   int rc = tinywav_open_write(&tw, channels, rate, TW_INT16, TW_INTERLEAVED, argv[4]);
   if (rc != 0) {
-    printf("Failed to open wave file for writing: %d", rc);
+    printf("Failed to open wave file for writing: %s\n", strerror(rc));
     return -1;
   }
 
@@ -33,7 +34,11 @@ int main(int argc, char** argv)
   int16_t* buffer = (int16_t*)malloc(samples * channels * 2);
 
   while (fread(buffer, 2, samples * channels, fpRead) == samples * channels) {
-    tinywav_write_f(&tw, buffer, samples);
+    rc = tinywav_write_f(&tw, buffer, samples);
+    if (rc != 0) {
+      printf("Failed to write wave file: %s\n", strerror(rc));
+      break;
+    }
   }
 
   tinywav_close_write(&tw);

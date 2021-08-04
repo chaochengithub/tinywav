@@ -84,9 +84,9 @@ int tinywav_open_write(TinyWav *tw,
  * @param f    A pointer to the sample data to write.
  * @param len  The number of frames to write.
  *
- * @return The total number of samples written to file.
+ * @return The error code. Zero if no error.
  */
-size_t tinywav_write_f(TinyWav *tw, const void *f, int len);
+int tinywav_write_f(TinyWav *tw, const void *f, int len);
 
 /** Stop writing to the file. The Tinywav struct is now invalid. */
 void tinywav_close_write(TinyWav *tw);

@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <errno.h>
 #if _WIN32
 #include <winsock2.h>
 #include <malloc.h>
@@ -25,6 +26,7 @@
 #include <alloca.h>
 #include <netinet/in.h>
 #endif
+
 #include "tinywav.h"
 
 int tinywav_open_write(TinyWav *tw,
@@ -38,10 +40,10 @@ int tinywav_open_write(TinyWav *tw,
   }
 #else
   tw->f = fopen(path, "wb");
-#endif
   if (!tw->f) {
-    return -1;
+    return errno;
   }
+#endif
   tw->numChannels = numChannels;
   tw->totalFramesWritten = 0;
   tw->sampFmt = sampFmt;
@@ -64,12 +66,20 @@ int tinywav_open_write(TinyWav *tw,
   h.Subchunk2Size = 0; // fill this in on file-close
 
   // write WAV header
-  return fwrite(&h, sizeof(TinyWavHeader), 1, tw->f) != 1;
+  size_t rc = fwrite(&h, sizeof(TinyWavHeader), 1, tw->f);
+  if (rc != 1) {
+    return errno;
+  }
+  return 0;
 }
 
-size_t tinywav_write_f(TinyWav *tw, const void *f, int len) {
+int tinywav_write_f(TinyWav *tw, const void *f, int len) {
   tw->totalFramesWritten += len;
-  return fwrite(f, sizeof(int16_t), tw->numChannels*len, tw->f);
+  size_t rc =  fwrite(f, sizeof(int16_t), tw->numChannels * len, tw->f);
+  if (rc != tw->numChannels * len) {
+    return errno;
+  }
+  return 0;
 }
 
 void tinywav_close_write(TinyWav *tw) {
