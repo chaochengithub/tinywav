@@ -29,7 +29,6 @@ int main(int argc, char** argv)
     printf("Failed to open wave file for writing: %s\n", strerror(rc));
     return -1;
   }
-
   
   int16_t* buffer = (int16_t*)malloc(samples * channels * 2);
 

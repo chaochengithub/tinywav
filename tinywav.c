@@ -73,6 +73,57 @@ int tinywav_open_write(TinyWav *tw,
   return 0;
 }
 
+int tinywav_open_read(TinyWav *tw, const char *path, TinyWavChannelFormat chanFmt, TinyWavSampleFormat sampFmt) {
+  tw->f = fopen(path, "rb");
+  assert(tw->f != NULL);
+  
+  size_t ret = fread(&tw->h, sizeof(TinyWavHeader), 1, tw->f);
+  assert(ret > 0);
+  assert(tw->h.ChunkID == htonl(0x52494646));        // "RIFF"
+  assert(tw->h.Format == htonl(0x57415645));         // "WAVE"
+  assert(tw->h.Subchunk1ID == htonl(0x666d7420));    // "fmt "
+  
+  // skip over any other chunks before the "data" chunk
+  while (tw->h.Subchunk2ID != htonl(0x64617461)) {   // "data"
+    fseek(tw->f, 4, SEEK_CUR);
+    fread(&tw->h.Subchunk2ID, 4, 1, tw->f);
+  }
+  assert(tw->h.Subchunk2ID == htonl(0x64617461));    // "data"
+  fread(&tw->h.Subchunk2Size, 4, 1, tw->f);
+  
+  tw->numChannels = tw->h.NumChannels;
+  tw->chanFmt = chanFmt;
+  tw->sampFmt = sampFmt;
+  
+  tw->totalFramesWritten = tw->h.Subchunk2Size / (tw->numChannels * tw->sampFmt);
+  return 0;
+}
+
+int tinywav_read_f(TinyWav *tw, void *data, int len) { // returns number of frames read
+  switch (tw->sampFmt) {
+    case TW_INT16: {
+      size_t samples_read = 0;
+      int16_t *interleaved_data = (int16_t *) alloca(tw->numChannels*len*sizeof(int16_t));
+      samples_read = fread(interleaved_data, sizeof(int16_t), tw->numChannels*len, tw->f);
+      switch (tw->chanFmt) {
+        case TW_INTERLEAVED: { // channel buffer is interleaved e.g. [LRLRLRLR]
+          memcpy(data, interleaved_data, tw->numChannels*len*sizeof(int16_t));
+          return (int) (samples_read/tw->numChannels);
+        }
+          default: return 0;
+      }
+    }
+    default: return 0;
+  }
+
+  return len;
+}
+
+void tinywav_close_read(TinyWav *tw) {
+  fclose(tw->f);
+  tw->f = NULL;
+}
+
 int tinywav_write_f(TinyWav *tw, const void *f, int len) {
   tw->totalFramesWritten += len;
   size_t rc =  fwrite(f, sizeof(int16_t), tw->numChannels * len, tw->f);
