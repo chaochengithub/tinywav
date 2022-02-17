@@ -21,8 +21,11 @@
 #if _WIN32
 #include <winsock2.h>
 #include <malloc.h>
-#else
+#elif !defined(__PROSPERO__)
 #include <alloca.h>
+#include <netinet/in.h>
+#else
+#include <stdlib.h>
 #include <netinet/in.h>
 #endif
 #include "tinywav.h"
